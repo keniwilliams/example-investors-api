@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['investor_id', 'amount', 'investment_date'])]
+#[Fillable(['investor_id', 'amount_minor', 'investment_date'])]
 class Investment extends Model
 {
     /**
@@ -25,7 +25,7 @@ class Investment extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'decimal:2',
+            'amount_minor' => 'integer',
             'investment_date' => 'date',
         ];
     }

@@ -10,7 +10,7 @@ final readonly class InvestorCsvRowDTO
         public string $externalId,
         public string $name,
         public int $age,
-        public string $amount,
+        public int $amountMinor,
         public string $investmentDate,
     ) {}
 
@@ -28,14 +28,14 @@ final readonly class InvestorCsvRowDTO
         $externalId = self::normaliseString($data['investor_id'] ?? null);
         $name = self::normaliseString($data['name'] ?? null);
         $age = self::normaliseAge($data['age'] ?? null);
-        $amount = self::normaliseDecimalAmount($data['investment_amount'] ?? null);
+        $amountMinor = self::normaliseAmountMinor($data['investment_amount'] ?? null);
         $investmentDate = self::normaliseDate($data['investment_date'] ?? null);
 
         if (
             $externalId === null
             || $name === null
             || $age === null
-            || $amount === null
+            || $amountMinor === null
             || $investmentDate === null
         ) {
             return null;
@@ -45,7 +45,7 @@ final readonly class InvestorCsvRowDTO
             externalId: $externalId,
             name: $name,
             age: $age,
-            amount: $amount,
+            amountMinor: $amountMinor,
             investmentDate: $investmentDate,
         );
     }
@@ -68,14 +68,14 @@ final readonly class InvestorCsvRowDTO
 
     /**
      * @return array{
-     *     amount: string,
+     *     amount_minor: int,
      *     investment_date: string
      * }
      */
     public function investmentPayload(): array
     {
         return [
-            'amount' => $this->amount,
+            'amount_minor' => $this->amountMinor,
             'investment_date' => $this->investmentDate,
         ];
     }
@@ -113,7 +113,7 @@ final readonly class InvestorCsvRowDTO
         return $age;
     }
 
-    private static function normaliseDecimalAmount(?string $value): ?string
+    private static function normaliseAmountMinor(?string $value): ?int
     {
         $value = trim((string) $value);
 
@@ -121,21 +121,22 @@ final readonly class InvestorCsvRowDTO
             return null;
         }
 
-        /*
-         * Keep money-like values as strings.
-         * Do not cast to float before persistence.
-         */
-        if (! preg_match('/^\d+(\.\d{1,2})?$/', $value)) {
+        $withoutCommas = str_replace(',', '', $value);
+        $hasCommas = str_contains($value, ',');
+
+        if ($hasCommas && ! preg_match('/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/', $value)) {
             return null;
         }
 
-        [$whole, $decimal] = array_pad(explode('.', $value, 2), 2, '00');
+        if (! preg_match('/^\d+(\.\d{1,2})?$/', $withoutCommas)) {
+            return null;
+        }
 
-        $whole = ltrim($whole, '0');
-        $whole = $whole === '' ? '0' : $whole;
+        [$whole, $decimal] = array_pad(explode('.', $withoutCommas, 2), 2, '00');
+
         $decimal = str_pad($decimal, 2, '0');
 
-        return $whole.'.'.$decimal;
+        return ((int) $whole * 100) + (int) $decimal;
     }
 
     private static function normaliseDate(?string $value): ?string

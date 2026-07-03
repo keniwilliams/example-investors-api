@@ -7,6 +7,34 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Investor Import Notes
+
+Investment amounts are parsed from CSV decimal text, with optional valid thousands separators, and stored as integer minor units in `investments.amount_minor`.
+
+For example, CSV investment_amount values `1250.50` and quoted `"1,250.50"` both become `125050`. This avoids float precision issues and keeps money handling explicit. API/resource formatting can convert minor units back into fixed 2-decimal display strings later.
+
+Currency is not present in the supplied CSV contract. In a production system, the investment currency should be recorded explicitly, either as a currency column such as `currency_code` using ISO 4217 codes, or as part of a wider investment/account configuration. This MVP stores only integer minor units for the provided amount and does not infer currency.
+
+### Comma-separated investment amounts
+
+Comma-grouped investment amounts are supported when they are valid CSV fields.
+
+Because commas are CSV delimiters, values such as `1,250.50` must be quoted in the uploaded CSV:
+
+```csv
+INV-001,Ada Lovelace,37,"1,250.50",2026-07-03
+```
+
+Unquoted comma-grouped amounts such as:
+
+```csv
+INV-001,Ada Lovelace,37,1,250.50,2026-07-03
+```
+
+will be parsed as multiple columns and rejected as malformed rows.
+
+Money-facing API output should convert integer minor units back into fixed 2-decimal strings. For example, `125000` becomes `"1250.00"`, `125050` becomes `"1250.50"`, `90` becomes `"0.90"`, and `9` becomes `"0.09"`. API responses should not expose money as floats.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

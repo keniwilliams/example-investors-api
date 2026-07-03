@@ -21,7 +21,7 @@ class InvestorInvestmentSchemaTest extends TestCase
         ]);
 
         $investment = $investor->investments()->create([
-            'amount' => 1250.50,
+            'amount_minor' => 125050,
             'investment_date' => '2026-07-03',
         ]);
 
@@ -48,7 +48,7 @@ class InvestorInvestmentSchemaTest extends TestCase
 
         Investment::create([
             'investor_id' => $investor->id,
-            'amount' => 500.00,
+            'amount_minor' => 50000,
             'investment_date' => '2026-07-03',
         ]);
 
@@ -56,7 +56,7 @@ class InvestorInvestmentSchemaTest extends TestCase
 
         Investment::create([
             'investor_id' => $investor->id,
-            'amount' => 750.00,
+            'amount_minor' => 75000,
             'investment_date' => '2026-07-03',
         ]);
     }

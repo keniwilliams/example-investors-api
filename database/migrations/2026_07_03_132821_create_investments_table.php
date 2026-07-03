@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('investments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('investor_id')->index();
-            $table->decimal('amount', 15, 2);
+            $table->unsignedBigInteger('amount_minor');
             $table->date('investment_date')->index();
             $table->timestamps();
 
