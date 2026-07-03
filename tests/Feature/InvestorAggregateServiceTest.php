@@ -16,7 +16,7 @@ class InvestorAggregateServiceTest extends TestCase
         $service = app(InvestorAggregateService::class);
 
         $this->assertSame(0.0, $service->averageInvestorAge());
-        $this->assertSame(0.0, $service->averageInvestmentAmount());
+        $this->assertSame(0, $service->averageInvestmentAmountMinor());
         $this->assertSame(0, $service->totalInvestments());
     }
 
@@ -35,24 +35,24 @@ class InvestorAggregateServiceTest extends TestCase
         ]);
 
         $firstInvestor->investments()->create([
-            'amount' => 100.00,
+            'amount_minor' => 10000,
             'investment_date' => '2026-07-01',
         ]);
 
         $firstInvestor->investments()->create([
-            'amount' => 200.00,
+            'amount_minor' => 20000,
             'investment_date' => '2026-07-02',
         ]);
 
         $secondInvestor->investments()->create([
-            'amount' => 600.00,
+            'amount_minor' => 60000,
             'investment_date' => '2026-07-01',
         ]);
 
         $service = app(InvestorAggregateService::class);
 
         $this->assertSame(45.0, $service->averageInvestorAge());
-        $this->assertSame(300.0, $service->averageInvestmentAmount());
+        $this->assertSame(30000, $service->averageInvestmentAmountMinor());
         $this->assertSame(3, $service->totalInvestments());
     }
 }

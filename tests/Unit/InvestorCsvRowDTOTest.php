@@ -22,7 +22,7 @@ class InvestorCsvRowDTOTest extends TestCase
         $this->assertSame('INV-001', $dto->externalId);
         $this->assertSame('Ada Lovelace', $dto->name);
         $this->assertSame(37, $dto->age);
-        $this->assertSame('1250.50', $dto->amount);
+        $this->assertSame(125050, $dto->amountMinor);
         $this->assertSame('2026-07-03', $dto->investmentDate);
         $this->assertSame('INV-001|2026-07-03', $dto->investmentNaturalKey());
         $this->assertSame([
@@ -31,9 +31,24 @@ class InvestorCsvRowDTOTest extends TestCase
             'age' => 37,
         ], $dto->investorPayload());
         $this->assertSame([
-            'amount' => '1250.50',
+            'amount_minor' => 125050,
             'investment_date' => '2026-07-03',
         ], $dto->investmentPayload());
+    }
+
+    #[DataProvider('validAmountProvider')]
+    public function test_it_converts_decimal_amount_text_to_minor_units(string $amount, int $expectedMinorUnits): void
+    {
+        $dto = InvestorCsvRowDTO::fromCsvData([
+            'investor_id' => 'INV-001',
+            'name' => 'Ada Lovelace',
+            'age' => '37',
+            'investment_amount' => $amount,
+            'investment_date' => '2026-07-03',
+        ]);
+
+        $this->assertInstanceOf(InvestorCsvRowDTO::class, $dto);
+        $this->assertSame($expectedMinorUnits, $dto->amountMinor);
     }
 
     /**
@@ -49,6 +64,20 @@ class InvestorCsvRowDTOTest extends TestCase
     public function test_it_rejects_invalid_csv_data(array $data): void
     {
         $this->assertNull(InvestorCsvRowDTO::fromCsvData($data));
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function validAmountProvider(): array
+    {
+        return [
+            'two decimal places' => ['1250.50', 125050],
+            'whole units' => ['1250', 125000],
+            'ninety nine minor units' => ['0.99', 99],
+            'one minor unit' => ['0.01', 1],
+            'zero' => ['0', 0],
+        ];
     }
 
     /**

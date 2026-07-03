@@ -198,7 +198,7 @@ class InvestorCsvImportService
         DB::table('investments')->upsert(
             array_values($investments),
             ['investor_id', 'investment_date'],
-            ['amount', 'updated_at'],
+            ['amount_minor', 'updated_at'],
         );
     }
 

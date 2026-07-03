@@ -7,6 +7,12 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Investor Import Notes
+
+Investment amounts are parsed from CSV decimal text and stored as integer minor units in `investments.amount_minor`.
+
+For example, CSV `investment_amount` value `1250.50` becomes `125050`. This avoids float precision issues and keeps money handling explicit. API/resource formatting can convert minor units back into 2-decimal display values later.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

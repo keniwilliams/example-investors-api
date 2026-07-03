@@ -12,9 +12,9 @@ class InvestorAggregateService
         return (float) (Investor::query()->avg('age') ?? 0);
     }
 
-    public function averageInvestmentAmount(): float
+    public function averageInvestmentAmountMinor(): int
     {
-        return (float) (Investment::query()->avg('amount') ?? 0);
+        return (int) round(Investment::query()->avg('amount_minor') ?? 0);
     }
 
     public function totalInvestments(): int
