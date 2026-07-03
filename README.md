@@ -274,6 +274,44 @@ php artisan test --filter=MoneyFormatterTest
 - Investor listing uses aggregate relationship data for investment counts and total invested values.
 - Authentication and authorization are intentionally out of scope for this MVP, but routes/controllers are structured so middleware can be added later.
 
+## Known limitations and production considerations
+
+This implementation is deliberately scoped as a backend/API MVP. The following areas are identified rather than silently hidden:
+
+### Date format compatibility
+
+The importer is intentionally strict about validation. Smoke testing against the supplied CSV showed that the provided file uses `DD-MM-YYYY` investment dates, while this implementation currently documents and accepts `YYYY-MM-DD`.
+
+The required follow-up is tracked separately as Issue #13. The intended fix is to accept both `YYYY-MM-DD` and `DD-MM-YYYY` using explicit Carbon format checks, then normalise stored dates to `YYYY-MM-DD`.
+
+### Currency modelling
+
+The supplied CSV includes `investment_amount` but does not include a currency field. This implementation therefore stores money safely as integer minor units, but it does not infer or model currency.
+
+For production financial data, currency should be explicit. A likely next step would be to add a `currency_code` field, using ISO 4217 values such as `GBP`, and include that currency in money-facing API responses.
+
+Example future response shape:
+
+```json
+{
+  "average_investment_amount": "517396.36",
+  "currency_code": "GBP"
+}
+```
+
+### Dated investment detail
+
+`GET /api/investors` is an aggregated unique-investor listing. It returns investor identity, age, total invested, and investment count, but it does not list each dated investment.
+
+That is intentional for the current endpoint because one investor can have many investment dates. If consumers need date-level detail, a separate investment detail endpoint would be clearer than overloading the aggregate investor list.
+
+Potential future endpoint shapes:
+
+```http
+GET /api/investors/{investor_id}/investments
+GET /api/investments?investor_id=1001
+```
+
 ## Scalability notes
 
 The MVP import reads CSV rows incrementally rather than loading the full file into memory. Rows are processed in chunks for database writes.
