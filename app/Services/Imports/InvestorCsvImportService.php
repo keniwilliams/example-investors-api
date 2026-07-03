@@ -2,8 +2,8 @@
 
 namespace App\Services\Imports;
 
+use App\DataTransferObjects\Imports\InvestorCsvRowDTO;
 use App\Models\Investor;
-use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -11,12 +11,12 @@ use SplFileObject;
 
 class InvestorCsvImportService
 {
-    private const CHUNK_SIZE = 500;
+    private const int CHUNK_SIZE = 500;
 
     /**
      * @var array<int, string>
      */
-    private const EXPECTED_HEADERS = [
+    private const array EXPECTED_HEADERS = [
         'investor_id',
         'name',
         'age',
@@ -32,8 +32,8 @@ class InvestorCsvImportService
         $summary = [
             'status' => 'completed',
             'rows_read' => 0,
-            'investors_upserted' => 0,
-            'investments_upserted' => 0,
+            'investors_upserted' => 0, // immediately overwritten but stated here for visibility
+            'investments_upserted' => 0, // immediately overwritten but stated here for visibility
             'rows_skipped' => 0,
         ];
 
@@ -53,17 +53,17 @@ class InvestorCsvImportService
                 }
 
                 $summary['rows_read']++;
-                $mappedRow = $this->mapRow($row);
+                $rowDTO = $this->mapRow($row);
 
-                if ($mappedRow === null) {
+                if ($rowDTO === null) {
                     $summary['rows_skipped']++;
 
                     continue;
                 }
 
-                $seenInvestors[$mappedRow['external_id']] = true;
-                $seenInvestments[$mappedRow['external_id'].'|'.$mappedRow['investment_date']] = true;
-                $chunk[] = $mappedRow;
+                $seenInvestors[$rowDTO->externalId] = true;
+                $seenInvestments[$rowDTO->investmentNaturalKey()] = true;
+                $chunk[] = $rowDTO;
 
                 if (count($chunk) >= self::CHUNK_SIZE) {
                     $this->flushChunk($chunk);
@@ -127,9 +127,8 @@ class InvestorCsvImportService
 
     /**
      * @param  array<int, string|null>|false  $row
-     * @return array{external_id: string, name: string, age: int, amount: string, investment_date: string}|null
      */
-    private function mapRow(array|false $row): ?array
+    private function mapRow(array|false $row): ?InvestorCsvRowDTO
     {
         if ($row === false || count($row) !== count(self::EXPECTED_HEADERS)) {
             return null;
@@ -140,55 +139,24 @@ class InvestorCsvImportService
             $row,
         ));
 
-        if ($data === false) {
+        if (! $data) {
             return null;
         }
 
-        if (
-            $data['investor_id'] === ''
-            || $data['name'] === ''
-            || ! ctype_digit($data['age'])
-            || ! is_numeric($data['investment_amount'])
-        ) {
-            return null;
-        }
-
-        $age = (int) $data['age'];
-        $amount = (float) $data['investment_amount'];
-        $investmentDate = DateTimeImmutable::createFromFormat('!Y-m-d', $data['investment_date']);
-        $dateErrors = DateTimeImmutable::getLastErrors();
-
-        if (
-            $age < 0
-            || $amount < 0
-            || $investmentDate === false
-            || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
-        ) {
-            return null;
-        }
-
-        return [
-            'external_id' => $data['investor_id'],
-            'name' => $data['name'],
-            'age' => $age,
-            'amount' => number_format($amount, 2, '.', ''),
-            'investment_date' => $investmentDate->format('Y-m-d'),
-        ];
+        return InvestorCsvRowDTO::fromCsvData($data);
     }
 
     /**
-     * @param  array<int, array{external_id: string, name: string, age: int, amount: string, investment_date: string}>  $rows
+     * @param  array<int, InvestorCsvRowDTO>  $rows
      */
     private function flushChunk(array $rows): void
     {
         $now = now();
         $investors = [];
 
-        foreach ($rows as $row) {
-            $investors[$row['external_id']] = [
-                'external_id' => $row['external_id'],
-                'name' => $row['name'],
-                'age' => $row['age'],
+        foreach ($rows as $rowDTO) {
+            $investors[$rowDTO->externalId] = [
+                ...$rowDTO->investorPayload(),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
@@ -206,17 +174,16 @@ class InvestorCsvImportService
 
         $investments = [];
 
-        foreach ($rows as $row) {
-            $investorId = $investorIds[$row['external_id']] ?? null;
+        foreach ($rows as $rowDTO) {
+            $investorId = $investorIds[$rowDTO->externalId] ?? null;
 
             if ($investorId === null) {
                 continue;
             }
 
-            $investments[$investorId.'|'.$row['investment_date']] = [
+            $investments[$investorId.'|'.$rowDTO->investmentDate] = [
                 'investor_id' => $investorId,
-                'amount' => $row['amount'],
-                'investment_date' => DateTimeImmutable::createFromFormat('!Y-m-d', $row['investment_date']),
+                ...$rowDTO->investmentPayload(),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
