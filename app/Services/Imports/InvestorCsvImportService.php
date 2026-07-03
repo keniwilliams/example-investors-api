@@ -88,6 +88,7 @@ class InvestorCsvImportService
     private function openCsv(string $path): SplFileObject
     {
         $file = new SplFileObject(Storage::disk('local')->path($path));
+        $file->setCsvControl(',', '"', '\\');
         $file->setFlags(SplFileObject::READ_CSV | SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY);
 
         return $file;

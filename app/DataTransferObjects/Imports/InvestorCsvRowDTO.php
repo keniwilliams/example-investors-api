@@ -2,7 +2,8 @@
 
 namespace App\DataTransferObjects\Imports;
 
-use DateTimeImmutable;
+use Carbon\CarbonImmutable;
+use Throwable;
 
 final readonly class InvestorCsvRowDTO
 {
@@ -147,16 +148,18 @@ final readonly class InvestorCsvRowDTO
             return null;
         }
 
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-        $errors = DateTimeImmutable::getLastErrors();
+        foreach (['Y-m-d', 'd-m-Y'] as $format) {
+            try {
+                $date = CarbonImmutable::createFromFormat($format, $value);
+            } catch (Throwable) {
+                continue;
+            }
 
-        if (
-            $date === false
-            || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
-        ) {
-            return null;
+            if ($date !== false && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
         }
 
-        return $date->format('Y-m-d');
+        return null;
     }
 }

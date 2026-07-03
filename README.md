@@ -39,9 +39,11 @@ INV-003,Katherine Johnson,101,3000,2026-07-05
 | `name` | Required non-empty string. |
 | `age` | Required integer greater than or equal to `0`. |
 | `investment_amount` | Required monetary text. Supports `xxxx`, `xxxx.x`, `xxxx.xx`, and valid quoted thousands separators. |
-| `investment_date` | Required date in `YYYY-MM-DD` format. |
+| `investment_date` | Required date. Accepts `YYYY-MM-DD` or `DD-MM-YYYY` and is normalised internally to `YYYY-MM-DD`. |
 
 Invalid rows are skipped and counted in the import summary rather than failing the whole import.
+
+Some supplied CSV exports use `DD-MM-YYYY` investment dates (for example `13-11-2024`). Both `YYYY-MM-DD` and `DD-MM-YYYY` are accepted; slash-separated formats such as `13/11/2024` are rejected.
 
 ## Money handling
 
