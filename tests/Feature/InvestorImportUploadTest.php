@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Services\InvestorCsvImportService;
+use App\Services\Imports\InvestorCsvImportService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
@@ -40,10 +40,11 @@ class InvestorImportUploadTest extends TestCase
         Storage::fake('public');
 
         $summary = [
-            'processed_rows' => 3,
-            'imported_rows' => 2,
-            'skipped_rows' => 1,
-            'error_rows' => 0,
+            'status' => 'completed',
+            'rows_read' => 3,
+            'investors_upserted' => 2,
+            'investments_upserted' => 2,
+            'rows_skipped' => 1,
         ];
 
         $this->mock(InvestorCsvImportService::class, function (MockInterface $mock) use ($summary): void {
