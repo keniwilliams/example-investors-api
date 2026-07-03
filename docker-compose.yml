@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: example-investors-api-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: investors_api
+      MYSQL_USER: investors_api
+      MYSQL_PASSWORD: investors_api
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - example-investors-api-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  example-investors-api-mysql-data:
