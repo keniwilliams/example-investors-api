@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ImportInvestorCsvRequest;
-use App\Services\InvestorCsvImportService;
+use App\Services\Imports\InvestorCsvImportService;
 use Illuminate\Http\JsonResponse;
 
 class InvestorImportController extends Controller
