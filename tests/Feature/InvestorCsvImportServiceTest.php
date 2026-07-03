@@ -94,6 +94,28 @@ class InvestorCsvImportServiceTest extends TestCase
         Storage::disk('local')->assertMissing($path);
     }
 
+    public function test_it_imports_rows_with_day_month_year_dates(): void
+    {
+        Storage::fake('local');
+
+        $path = $this->storeCsv(implode("\n", [
+            'investor_id,name,age,investment_amount,investment_date',
+            '1001,Daniel Nelson,28,328085.43,13-11-2024',
+        ]));
+
+        $summary = app(InvestorCsvImportService::class)->import($path);
+
+        $this->assertSame([
+            'status' => 'completed',
+            'rows_read' => 1,
+            'investors_upserted' => 1,
+            'investments_upserted' => 1,
+            'rows_skipped' => 0,
+        ], $summary);
+        $this->assertSame('2024-11-13', Investment::first()->investment_date->toDateString());
+        Storage::disk('local')->assertMissing($path);
+    }
+
     public function test_it_skips_invalid_rows_and_imports_valid_rows(): void
     {
         Storage::fake('local');

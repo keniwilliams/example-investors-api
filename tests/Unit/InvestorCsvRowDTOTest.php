@@ -36,6 +36,21 @@ class InvestorCsvRowDTOTest extends TestCase
         ], $dto->investmentPayload());
     }
 
+    #[DataProvider('validDateProvider')]
+    public function test_it_normalises_supported_date_formats(string $date, string $expectedDate): void
+    {
+        $dto = InvestorCsvRowDTO::fromCsvData([
+            'investor_id' => 'INV-001',
+            'name' => 'Ada Lovelace',
+            'age' => '37',
+            'investment_amount' => '1250.50',
+            'investment_date' => $date,
+        ]);
+
+        $this->assertInstanceOf(InvestorCsvRowDTO::class, $dto);
+        $this->assertSame($expectedDate, $dto->investmentDate);
+    }
+
     #[DataProvider('validAmountProvider')]
     public function test_it_converts_decimal_amount_text_to_minor_units(string $amount, int $expectedMinorUnits): void
     {
@@ -86,6 +101,17 @@ class InvestorCsvRowDTOTest extends TestCase
     }
 
     /**
+     * @return array<string, array{string, string}>
+     */
+    public static function validDateProvider(): array
+    {
+        return [
+            'ISO format' => ['2024-11-13', '2024-11-13'],
+            'day-month-year format' => ['13-11-2024', '2024-11-13'],
+        ];
+    }
+
+    /**
      * @return array<string, array<int, array{
      *     investor_id?: string|null,
      *     name?: string|null,
@@ -117,7 +143,10 @@ class InvestorCsvRowDTOTest extends TestCase
             'malformed comma grouping 1,,250' => [array_replace($valid, ['investment_amount' => '1,,250'])],
             'malformed comma grouping 1,250,00' => [array_replace($valid, ['investment_amount' => '1,250,00'])],
             'invalid date format' => [array_replace($valid, ['investment_date' => '03/07/2026'])],
-            'invalid calendar date' => [array_replace($valid, ['investment_date' => '2026-02-31'])],
+            'invalid calendar date year-month-day' => [array_replace($valid, ['investment_date' => '2026-02-31'])],
+            'invalid calendar date day-month-year' => [array_replace($valid, ['investment_date' => '31-02-2024'])],
+            'slash separated date' => [array_replace($valid, ['investment_date' => '13/11/2024'])],
+            'empty date' => [array_replace($valid, ['investment_date' => ''])],
         ];
     }
 }
