@@ -35,6 +35,71 @@ will be parsed as multiple columns and rejected as malformed rows.
 
 Money-facing API output should convert integer minor units back into fixed 2-decimal strings. For example, `125000` becomes `"1250.00"`, `125050` becomes `"1250.50"`, `90` becomes `"0.90"`, and `9` becomes `"0.09"`. API responses should not expose money as floats.
 
+## API Endpoints
+
+All endpoints return JSON and are mounted under `/api`.
+
+### `GET /api/investors`
+
+Returns unique investors, paginated (`paginate(100)`). Each investor aggregates their investments rather than assuming a single amount per investor.
+
+```json
+{
+  "data": [
+    {
+      "investor_id": "INV001",
+      "name": "Jane Smith",
+      "age": 42,
+      "total_invested": "125000.00",
+      "investment_count": 3
+    }
+  ],
+  "links": { "...": "..." },
+  "meta": { "...": "..." }
+}
+```
+
+Investors with no investments return `"total_invested": "0.00"` and `"investment_count": 0`.
+
+### `GET /api/investors/average-age`
+
+```json
+{
+  "average_age": 47.04
+}
+```
+
+Rounded to 2 decimal places. An empty database returns `{"average_age": 0}`.
+
+### `GET /api/investments/average-amount`
+
+Money is stored internally as integer minor units and formatted as a fixed 2-decimal string for API output, never a float.
+
+```json
+{
+  "average_investment_amount": "517396.36"
+}
+```
+
+An empty database returns `{"average_investment_amount": "0.00"}`.
+
+### `GET /api/investments/count`
+
+```json
+{
+  "total_investments": 10000
+}
+```
+
+An empty database returns `{"total_investments": 0}`.
+
+### Architecture notes
+
+- Controllers stay thin: they call `InvestorAggregateService` or an Eloquent query and return a resource/JSON response.
+- `InvestorResource` shapes the investor list response, including `MoneyFormatter::formatMinorAmount()` for `total_invested`.
+- The investor listing uses `withCount('investments')` and `withSum('investments', 'amount_minor')` to avoid N+1 queries.
+- Authentication/authorization is intentionally out of scope for this MVP, but routes/controllers are structured so middleware (e.g. Sanctum) can be added later without reworking controller or service responsibilities.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
