@@ -4,6 +4,7 @@ namespace App\Services\Imports;
 
 use App\DataTransferObjects\Imports\InvestorCsvRowDTO;
 use App\Models\Investor;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -184,6 +185,7 @@ class InvestorCsvImportService
             $investments[$investorId.'|'.$rowDTO->investmentDate] = [
                 'investor_id' => $investorId,
                 ...$rowDTO->investmentPayload(),
+                'investment_date' => DateTimeImmutable::createFromFormat('!Y-m-d', $rowDTO->investmentDate),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
