@@ -1,0 +1,174 @@
+{
+  "info": {
+    "_postman_id": "7d65ab39-6f57-4d7c-a8f9-exampleinvestorsapi",
+    "name": "Example Investors API",
+    "description": "Postman collection for the Laravel Example Investors API.\n\nBase URL is controlled by the `base_url` environment variable.\n\nCSV upload uses multipart/form-data with a file field named `file`. For comma-grouped investment amounts such as `1,250.50`, the CSV value must be quoted, for example `\"1,250.50\"`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Import Investors CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "investors-smoke.csv",
+              "description": "Select a local CSV file. Required headers: investor_id,name,age,investment_amount,investment_date"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/imports/investors",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "imports",
+            "investors"
+          ]
+        },
+        "description": "Upload a CSV file with multipart/form-data.\n\nRequired file field name: `file`.\n\nExample CSV:\n\ninvestor_id,name,age,investment_amount,investment_date\nSMOKE-001,Ada Lovelace,37,1250.50,2026-07-03\nSMOKE-002,Grace Hopper,85,\"1,250.50\",2026-07-04\nSMOKE-003,Katherine Johnson,101,3000,2026-07-05\n"
+      },
+      "response": []
+    },
+    {
+      "name": "List Investors",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/investors",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "investors"
+          ]
+        },
+        "description": "Returns paginated unique investors. Expected money output should be fixed 2-decimal strings, e.g. `total_invested: \"1250.50\"`."
+      },
+      "response": []
+    },
+    {
+      "name": "Average Investor Age",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/investors/average-age",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "investors",
+            "average-age"
+          ]
+        },
+        "description": "Returns average investor age."
+      },
+      "response": []
+    },
+    {
+      "name": "Average Investment Amount",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/investments/average-amount",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "investments",
+            "average-amount"
+          ]
+        },
+        "description": "Returns average investment amount as a fixed 2-decimal string, formatted from integer minor units. Example: `{\"average_investment_amount\": \"1250.50\"}`."
+      },
+      "response": []
+    },
+    {
+      "name": "Total Investments",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/investments/count",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "investments",
+            "count"
+          ]
+        },
+        "description": "Returns total investment row count."
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Status is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202]);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8101",
+      "type": "string"
+    }
+  ]
+}
