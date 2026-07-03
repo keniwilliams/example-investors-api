@@ -11,7 +11,7 @@
 
 Investment amounts are parsed from CSV decimal text, with optional valid thousands separators, and stored as integer minor units in `investments.amount_minor`.
 
-For example, CSV `investment_amount` values `1250.50` and `1,250.50` both become `125050`. This avoids float precision issues and keeps money handling explicit. API/resource formatting can convert minor units back into fixed 2-decimal display strings later.
+For example, CSV investment_amount values `1250.50` and quoted `"1,250.50"` both become `125050`. This avoids float precision issues and keeps money handling explicit. API/resource formatting can convert minor units back into fixed 2-decimal display strings later.
 
 Currency is not present in the supplied CSV contract. In a production system, the investment currency should be recorded explicitly, either as a currency column such as `currency_code` using ISO 4217 codes, or as part of a wider investment/account configuration. This MVP stores only integer minor units for the provided amount and does not infer currency.
 
