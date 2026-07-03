@@ -17,6 +17,7 @@ class InvestorController extends Controller
         $investors = Investor::query()
             ->withCount('investments')
             ->withSum('investments', 'amount_minor')
+            ->orderBy('id')
             ->paginate(100);
 
         return InvestorResource::collection($investors);
