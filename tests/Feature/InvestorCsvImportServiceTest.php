@@ -108,16 +108,18 @@ class InvestorCsvImportServiceTest extends TestCase
             'INV-005,Invalid Date,37,1250.50,03/07/2026',
             'INV-006,Too Many Decimal Places,37,12.999,2026-07-03',
             'INV-007,Malformed Comma Grouping,37,"12,50",2026-07-03',
+            'INV-008,Malformed Comma Grouping,37,"1,25,000",2026-07-03',
+            'INV-009,Unquoted Grouped Amount,37,1,250.50,2026-07-03',
         ]));
 
         $summary = app(InvestorCsvImportService::class)->import($path);
 
         $this->assertSame([
             'status' => 'completed',
-            'rows_read' => 8,
+            'rows_read' => 10,
             'investors_upserted' => 2,
             'investments_upserted' => 2,
-            'rows_skipped' => 6,
+            'rows_skipped' => 8,
         ], $summary);
         $this->assertSame(2, Investor::count());
         $this->assertSame(2, Investment::count());
