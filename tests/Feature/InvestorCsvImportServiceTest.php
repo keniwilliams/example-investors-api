@@ -101,26 +101,31 @@ class InvestorCsvImportServiceTest extends TestCase
         $path = $this->storeCsv(implode("\n", [
             'investor_id,name,age,investment_amount,investment_date',
             'INV-001,Ada Lovelace,37,1250.50,2026-07-03',
+            'INV-002,Grace Hopper,85,"1,250.5",2026-07-03',
             ',Missing Id,37,1250.50,2026-07-03',
-            'INV-002,Invalid Age,nope,1250.50,2026-07-03',
-            'INV-003,Invalid Amount,37,-1,2026-07-03',
-            'INV-004,Invalid Date,37,1250.50,03/07/2026',
-            'INV-005,Too Many Decimal Places,37,12.999,2026-07-03',
+            'INV-003,Invalid Age,nope,1250.50,2026-07-03',
+            'INV-004,Invalid Amount,37,-1,2026-07-03',
+            'INV-005,Invalid Date,37,1250.50,03/07/2026',
+            'INV-006,Too Many Decimal Places,37,12.999,2026-07-03',
+            'INV-007,Malformed Comma Grouping,37,"12,50",2026-07-03',
         ]));
 
         $summary = app(InvestorCsvImportService::class)->import($path);
 
         $this->assertSame([
             'status' => 'completed',
-            'rows_read' => 6,
-            'investors_upserted' => 1,
-            'investments_upserted' => 1,
-            'rows_skipped' => 5,
+            'rows_read' => 8,
+            'investors_upserted' => 2,
+            'investments_upserted' => 2,
+            'rows_skipped' => 6,
         ], $summary);
-        $this->assertSame(1, Investor::count());
-        $this->assertSame(1, Investment::count());
+        $this->assertSame(2, Investor::count());
+        $this->assertSame(2, Investment::count());
         $this->assertDatabaseHas('investors', [
             'external_id' => 'INV-001',
+        ]);
+        $this->assertDatabaseHas('investments', [
+            'amount_minor' => 125050,
         ]);
         Storage::disk('local')->assertMissing($path);
     }

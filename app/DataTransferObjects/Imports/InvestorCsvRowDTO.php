@@ -121,11 +121,18 @@ final readonly class InvestorCsvRowDTO
             return null;
         }
 
-        if (! preg_match('/^\d+(\.\d{1,2})?$/', $value)) {
+        $withoutCommas = str_replace(',', '', $value);
+        $hasCommas = str_contains($value, ',');
+
+        if ($hasCommas && ! preg_match('/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/', $value)) {
             return null;
         }
 
-        [$whole, $decimal] = array_pad(explode('.', $value, 2), 2, '00');
+        if (! preg_match('/^\d+(\.\d{1,2})?$/', $withoutCommas)) {
+            return null;
+        }
+
+        [$whole, $decimal] = array_pad(explode('.', $withoutCommas, 2), 2, '00');
 
         $decimal = str_pad($decimal, 2, '0');
 

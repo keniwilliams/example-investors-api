@@ -73,8 +73,13 @@ class InvestorCsvRowDTOTest extends TestCase
     {
         return [
             'two decimal places' => ['1250.50', 125050],
+            'one decimal place' => ['1250.5', 125050],
             'whole units' => ['1250', 125000],
+            'grouped whole units' => ['1,250', 125000],
+            'grouped one decimal place' => ['1,250.5', 125050],
+            'grouped two decimal places' => ['1,250.50', 125050],
             'ninety nine minor units' => ['0.99', 99],
+            'nine minor units' => ['0.09', 9],
             'one minor unit' => ['0.01', 1],
             'zero' => ['0', 0],
         ];
@@ -107,6 +112,10 @@ class InvestorCsvRowDTOTest extends TestCase
             'missing amount' => [array_replace($valid, ['investment_amount' => ''])],
             'negative amount' => [array_replace($valid, ['investment_amount' => '-1'])],
             'too many decimal places' => [array_replace($valid, ['investment_amount' => '1250.999'])],
+            'malformed comma grouping 12,50' => [array_replace($valid, ['investment_amount' => '12,50'])],
+            'malformed comma grouping 1,25,000' => [array_replace($valid, ['investment_amount' => '1,25,000'])],
+            'malformed comma grouping 1,,250' => [array_replace($valid, ['investment_amount' => '1,,250'])],
+            'malformed comma grouping 1,250,00' => [array_replace($valid, ['investment_amount' => '1,250,00'])],
             'invalid date format' => [array_replace($valid, ['investment_date' => '03/07/2026'])],
             'invalid calendar date' => [array_replace($valid, ['investment_date' => '2026-02-31'])],
         ];
