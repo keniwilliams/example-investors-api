@@ -6,9 +6,11 @@
 ![Tests](https://img.shields.io/badge/Tests-PHPUnit-6f42c1)
 ![Database](https://img.shields.io/badge/Database-MySQL-4479a1?logo=mysql&logoColor=white)
 
-A Laravel API for importing investor CSV data, storing investors and dated investments, and exposing aggregate JSON endpoints.
+A Laravel API for importing investor CSV data, storing investors and dated investments, and exposing aggregate JSON
+endpoints.
 
-This project was built as a focused backend/API exercise. It intentionally keeps the implementation close to Laravel conventions: migrations, Eloquent models, form requests, services, API resources, controllers, routes, and tests.
+This project was built as a focused backend/API exercise. It intentionally keeps the implementation close to Laravel
+conventions: migrations, Eloquent models, form requests, services, API resources, controllers, routes, and tests.
 
 ## Requirements covered
 
@@ -20,6 +22,12 @@ This project was built as a focused backend/API exercise. It intentionally keeps
 - Avoid unbounded investor listing responses.
 - Keep money handling explicit and avoid float storage.
 - Include tests around import, money parsing, aggregates, and API responses.
+
+## Scope decisions
+
+Authentication, authorization, rate limiting, background import queues, and import diagnostics are intentionally outside
+this 90-minute MVP. The code is structured so middleware, queued jobs, import status records, and row-level diagnostics
+can be added without rewriting the core import or aggregate logic.
 
 ## CSV format
 
@@ -39,37 +47,50 @@ INV-003,Katherine Johnson,101,3000,2026-07-05
 
 ### Field rules
 
-| Field | Rule |
-| --- | --- |
-| `investor_id` | Required source identifier. Stored as `investors.external_id`. |
-| `name` | Required non-empty string. |
-| `age` | Required integer greater than or equal to `0`. |
+| Field               | Rule                                                                                                 |
+|---------------------|------------------------------------------------------------------------------------------------------|
+| `investor_id`       | Required source identifier. Stored as `investors.external_id`.                                       |
+| `name`              | Required non-empty string.                                                                           |
+| `age`               | Required integer greater than or equal to `0`.                                                       |
 | `investment_amount` | Required monetary text. Supports `xxxx`, `xxxx.x`, `xxxx.xx`, and valid quoted thousands separators. |
-| `investment_date` | Required date. Accepts `YYYY-MM-DD` or `DD-MM-YYYY` and is normalised internally to `YYYY-MM-DD`. |
+| `investment_date`   | Required date. Accepts `YYYY-MM-DD` or `DD-MM-YYYY` and is normalised internally to `YYYY-MM-DD`.    |
 
 Invalid rows are skipped and counted in the import summary rather than failing the whole import.
 
-Some supplied CSV exports use `DD-MM-YYYY` investment dates (for example `13-11-2024`). Both `YYYY-MM-DD` and `DD-MM-YYYY` are accepted; slash-separated formats such as `13/11/2024` are rejected.
+### Invalid row handling
+
+This MVP keeps CSV import behaviour tolerant: one malformed row should not fail the whole upload. Skipped rows are
+counted in the import response through `rows_skipped`.
+
+Skipped-row reasons are not persisted or exposed through a diagnostics endpoint in this version. In a production
+version, I would add an `imports` table and an `import_row_failures` table containing the row number, source investor id
+where available, failure reason, and a safe redacted copy of the raw row. The API would then return an import id and
+expose row-level diagnostics through an import status endpoint.
+
+Some supplied CSV exports use `DD-MM-YYYY` investment dates (for example `13-11-2024`). Both `YYYY-MM-DD` and
+`DD-MM-YYYY` are accepted; slash-separated formats such as `13/11/2024` are rejected.
 
 ## Money handling
 
-Investment amounts are parsed from CSV text, normalised to fixed 2-decimal monetary values, then stored as integer minor units in `investments.amount_minor`.
+Investment amounts are parsed from CSV text, normalised to fixed 2-decimal monetary values, then stored as integer minor
+units in `investments.amount_minor`.
 
 Examples:
 
-| CSV value | Normalised value | Stored `amount_minor` |
-| --- | ---: | ---: |
-| `1250` | `1250.00` | `125000` |
-| `1250.5` | `1250.50` | `125050` |
-| `1250.50` | `1250.50` | `125050` |
-| `"1,250.50"` | `1250.50` | `125050` |
-| `0.09` | `0.09` | `9` |
+| CSV value    | Normalised value | Stored `amount_minor` |
+|--------------|-----------------:|----------------------:|
+| `1250`       |        `1250.00` |              `125000` |
+| `1250.5`     |        `1250.50` |              `125050` |
+| `1250.50`    |        `1250.50` |              `125050` |
+| `"1,250.50"` |        `1250.50` |              `125050` |
+| `0.09`       |           `0.09` |                   `9` |
 
-Money is never stored or returned as a float. API-facing money values are formatted back into fixed 2-decimal strings, for example:
+Money is never stored or returned as a float. API-facing money values are formatted back into fixed 2-decimal strings,
+for example:
 
 ```json
 {
-  "average_investment_amount": "1250.50"
+    "average_investment_amount": "1250.50"
 }
 ```
 
@@ -95,13 +116,23 @@ Malformed grouped values such as `12,50`, `1,25,000`, `1,,250`, and `1,250,00` a
 
 ### Currency note
 
-Currency is not present in the supplied CSV contract. This MVP stores only integer minor units for the provided amount and does not infer GBP, USD, or any other currency.
+Currency is not present in the supplied CSV contract. This MVP stores only integer minor units for the provided amount
+and does not infer GBP, USD, or any other currency.
 
-In a production system, currency should be recorded explicitly, for example with a `currency_code` column using ISO 4217 codes, or as part of a wider account/investment configuration.
+In a production system, currency should be recorded explicitly, for example with a `currency_code` column using ISO 4217
+codes, or as part of a wider account/investment configuration.
 
 ## API endpoints
 
 All endpoints return JSON and are mounted under `/api`.
+
+### Aggregate endpoint shape
+
+The aggregate endpoints are intentionally separate in this MVP because each endpoint maps directly to one requirement
+and one focused query. This keeps the response contracts, tests, and empty-database behaviour simple.
+
+In a production API, I would consider adding a consolidated `GET /api/aggregates` endpoint once the aggregate contract
+grows or clients need dashboard-style data in one round trip.
 
 ### `POST /api/imports/investors`
 
@@ -117,11 +148,11 @@ Example response shape:
 
 ```json
 {
-  "status": "completed",
-  "rows_read": 3,
-  "investors_upserted": 3,
-  "investments_upserted": 3,
-  "rows_skipped": 0
+    "status": "completed",
+    "rows_read": 3,
+    "investors_upserted": 3,
+    "investments_upserted": 3,
+    "rows_skipped": 0
 }
 ```
 
@@ -129,21 +160,26 @@ Raw uploaded CSV files are stored on Laravel's private local disk during import 
 
 ### `GET /api/investors`
 
-Returns unique investors, paginated with `paginate(100)`. Each investor aggregates their investments rather than assuming a single amount per investor.
+Returns unique investors, paginated with `paginate(100)`. Each investor aggregates their investments rather than
+assuming a single amount per investor.
 
 ```json
 {
-  "data": [
-    {
-      "investor_id": "INV001",
-      "name": "Jane Smith",
-      "age": 42,
-      "total_invested": "1250.00",
-      "investment_count": 3
+    "data": [
+        {
+            "investor_id": "INV001",
+            "name": "Jane Smith",
+            "age": 42,
+            "total_invested": "1250.00",
+            "investment_count": 3
+        }
+    ],
+    "links": {
+        "...": "..."
+    },
+    "meta": {
+        "...": "..."
     }
-  ],
-  "links": { "...": "..." },
-  "meta": { "...": "..." }
 }
 ```
 
@@ -151,8 +187,8 @@ Investors with no investments return:
 
 ```json
 {
-  "total_invested": "0.00",
-  "investment_count": 0
+    "total_invested": "0.00",
+    "investment_count": 0
 }
 ```
 
@@ -160,7 +196,7 @@ Investors with no investments return:
 
 ```json
 {
-  "average_age": 47.04
+    "average_age": 47.04
 }
 ```
 
@@ -170,15 +206,16 @@ Average age is rounded to 2 decimal places. An empty database returns `0`.
 
 ```json
 {
-  "average_investment_amount": "517396.36"
+    "average_investment_amount": "517396.36"
 }
 ```
 
-Average investment amount is calculated from integer minor units and formatted as a fixed 2-decimal string. An empty database returns:
+Average investment amount is calculated from integer minor units and formatted as a fixed 2-decimal string. An empty
+database returns:
 
 ```json
 {
-  "average_investment_amount": "0.00"
+    "average_investment_amount": "0.00"
 }
 ```
 
@@ -186,7 +223,7 @@ Average investment amount is calculated from integer minor units and formatted a
 
 ```json
 {
-  "total_investments": 10000
+    "total_investments": 10000
 }
 ```
 
@@ -194,7 +231,7 @@ An empty database returns:
 
 ```json
 {
-  "total_investments": 0
+    "total_investments": 0
 }
 ```
 
@@ -243,6 +280,11 @@ DB_USERNAME=investors_api
 DB_PASSWORD=investors_api
 ```
 
+### Local Docker credentials
+
+The Docker Compose MySQL credentials are local development defaults only. They are not production secrets and should not
+be reused outside a disposable local environment.
+
 Run migrations:
 
 ```bash
@@ -280,12 +322,15 @@ php artisan test --filter=MoneyFormatterTest
 - Money parsing is handled at the CSV boundary and stored as integer minor units.
 - Money formatting happens only at the API/resource output boundary.
 - Investor listing uses aggregate relationship data for investment counts and total invested values.
-- Authentication and authorization are intentionally out of scope for this MVP, but routes/controllers are structured so middleware can be added later.
+- Authentication, authorization, and rate limiting are intentionally out of scope for this MVP, but routes/controllers
+  are structured so middleware can be added later.
 
 ## Scalability notes
 
-The MVP import reads CSV rows incrementally rather than loading the full file into memory. Rows are processed in chunks for database writes.
+The MVP import reads CSV rows incrementally rather than loading the full file into memory. Rows are processed in chunks
+for database writes.
 
-For larger production imports, the next step would be to store the uploaded CSV privately, create an import record, dispatch a queued job, return `202 Accepted`, and expose an import status endpoint.
+For larger production imports, the next step would be to store the uploaded CSV privately, create an import record,
+dispatch a queued job, return `202 Accepted`, and expose an import status endpoint.
 
 That production queue/status flow is intentionally not included in this 90-minute MVP scope.
