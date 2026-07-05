@@ -1,5 +1,11 @@
 # Example Investors API
 
+[![CI](https://github.com/keniwilliams/example-investors-api/actions/workflows/ci.yml/badge.svg)](https://github.com/keniwilliams/example-investors-api/actions/workflows/ci.yml)
+![PHP](https://img.shields.io/badge/PHP-8.3%2B-777bb4?logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-13.x-ff2d20?logo=laravel&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-PHPUnit-6f42c1)
+![Database](https://img.shields.io/badge/Database-MySQL-4479a1?logo=mysql&logoColor=white)
+
 A Laravel API for importing investor CSV data, storing investors and dated investments, and exposing aggregate JSON endpoints.
 
 This project was built as a focused backend/API exercise. It intentionally keeps the implementation close to Laravel conventions: migrations, Eloquent models, form requests, services, API resources, controllers, routes, and tests.
