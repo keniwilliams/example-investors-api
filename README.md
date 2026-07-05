@@ -1,7 +1,7 @@
 # Example Investors API
 
 [![CI](https://github.com/keniwilliams/example-investors-api/actions/workflows/ci.yml/badge.svg)](https://github.com/keniwilliams/example-investors-api/actions/workflows/ci.yml)
-![PHP](https://img.shields.io/badge/PHP-8.3%2B-777bb4?logo=php&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.4%2B-777bb4?logo=php&logoColor=white)
 ![Laravel](https://img.shields.io/badge/Laravel-13.x-ff2d20?logo=laravel&logoColor=white)
 ![Tests](https://img.shields.io/badge/Tests-PHPUnit-6f42c1)
 ![Database](https://img.shields.io/badge/Database-MySQL-4479a1?logo=mysql&logoColor=white)
